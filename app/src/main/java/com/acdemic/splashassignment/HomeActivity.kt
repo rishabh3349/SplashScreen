@@ -64,12 +64,12 @@ fun HomeLaunch() {
         "मुख्य द्वार", "पीछे का गेट", "कैंटीन"
     ) // Hardcoded Hindi translations
     val tamilDestinations = listOf(
-        "நூலகம்", "ஈ303", "டி-ப்ளாக்", "ஈ-ப்ளாக்",  // Hardcoded Tamil translations
+        "நூலகம்", "ஈ303", "டி-ப்ளாக்", "ஈ-ப்ளாக்",
         "ஏ-ப்ளாக்", "பேராசிரியர் ஆய்வகம்", "செய்லிடல் செல்",
         "முதன்மை வாயில்", "பின்புற வாயில்", "கேன்டீன்"
     )
     val teluguDestinations = listOf(
-        "గ్రంథాలయం", "E303", "D-బ్లాక్", "E-బ్లాక్",  // Hardcoded Telugu translations
+        "గ్రంథాలయం", "E303", "D-బ్లాక్", "E-బ్లాక్",
         "A-బ్లాక్", "ప్రొఫెసర్ ల్యాబ్", "ఇంక్యూబేషన్ సెల్",
         "ప్రధాన గేట్", "బ్యాక్ గేట్", "కాంటీన్"
     )
@@ -88,7 +88,7 @@ fun HomeLaunch() {
         "Telugu" to "గమ్యస్థానాన్ని నమోదు చేయండి"
     )
 
-    var language by remember { mutableStateOf("English") } // Default language
+    var language by remember { mutableStateOf("English") }
     var searchQuery by remember { mutableStateOf("") }
     var displayedDestinations by remember { mutableStateOf(englishDestinations) }
     val context = LocalContext.current
@@ -120,7 +120,7 @@ fun HomeLaunch() {
                     "Telugu" -> teluguDestinations
                     else -> englishDestinations
                 }
-                showDialog = false // Close the dialog after language selection
+                showDialog = false
             }
         )
     }
@@ -233,7 +233,7 @@ fun HomeLaunch() {
                 imageVector = Icons.Default.Language,
                 contentDescription = "Change Language",
                 tint = Color.DarkGray,
-                modifier = Modifier.size(40.dp) // Increase the size of the icon
+                modifier = Modifier.size(40.dp)
             )
         }
     }
