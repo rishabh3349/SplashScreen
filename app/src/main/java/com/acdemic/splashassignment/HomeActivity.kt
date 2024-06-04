@@ -17,9 +17,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -48,16 +51,46 @@ class HomeActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeLaunch() {
-    val allDestinations = listOf(
+    val originalDestinations = listOf(
         "Library", "E303", "D-block", "E-block",
         "A-block", "Prof's Lab", "Incubation Cell",
         "Main Gate", "Back Gate", "Canteen"
     )
-    var searchQuery by remember { mutableStateOf("") }
-    val filteredDestinations = remember(searchQuery) {
-        allDestinations.filter { it.contains(searchQuery, ignoreCase = true) }
-    }
 
+    val englishDestinations = originalDestinations
+    val hindiDestinations = listOf(
+        "पुस्तकालय", "ई303", "डी-ब्लॉक", "ई-ब्लॉक",
+        "ए-ब्लॉक", "प्रोफेसर लैब", "इनक्यूबेशन सेल",
+        "मुख्य द्वार", "पीछे का गेट", "कैंटीन"
+    ) // Hardcoded Hindi translations
+    val tamilDestinations = listOf(
+        "நூலகம்", "ஈ303", "டி-ப்ளாக்", "ஈ-ப்ளாக்",  // Hardcoded Tamil translations
+        "ஏ-ப்ளாக்", "பேராசிரியர் ஆய்வகம்", "செய்லிடல் செல்",
+        "முதன்மை வாயில்", "பின்புற வாயில்", "கேன்டீன்"
+    )
+    val teluguDestinations = listOf(
+        "గ్రంథాలయం", "E303", "D-బ్లాక్", "E-బ్లాక్",  // Hardcoded Telugu translations
+        "A-బ్లాక్", "ప్రొఫెసర్ ల్యాబ్", "ఇంక్యూబేషన్ సెల్",
+        "ప్రధాన గేట్", "బ్యాక్ గేట్", "కాంటీన్"
+    )
+
+    val titleTranslations = mapOf(
+        "English" to "Welcome to IITM RP",
+        "Hindi" to "IITM RP में आपका स्वागत है",
+        "Tamil" to "IITM RP க்கு வரவேற்கின்றோம்",
+        "Telugu" to "IITM RP కు స్వాగతం"
+    )
+
+    val hintTranslations = mapOf(
+        "English" to "Enter Destination",
+        "Hindi" to "गंतव्य दर्ज करें",
+        "Tamil" to "இலக்கு உள்ளிடுக",
+        "Telugu" to "గమ్యస్థానాన్ని నమోదు చేయండి"
+    )
+
+    var language by remember { mutableStateOf("English") } // Default language
+    var searchQuery by remember { mutableStateOf("") }
+    var displayedDestinations by remember { mutableStateOf(englishDestinations) }
     val context = LocalContext.current
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -73,81 +106,183 @@ fun HomeLaunch() {
         }
     )
 
-    Column(
+    var showDialog by remember { mutableStateOf(false) }
+
+    if (showDialog) {
+        LanguageSelectionDialog(
+            onDismissRequest = { showDialog = false },
+            onLanguageSelected = { selectedLanguage ->
+                language = selectedLanguage
+                displayedDestinations = when (selectedLanguage) {
+                    "English" -> englishDestinations
+                    "Hindi" -> hindiDestinations
+                    "Tamil" -> tamilDestinations
+                    "Telugu" -> teluguDestinations
+                    else -> englishDestinations
+                }
+                showDialog = false // Close the dialog after language selection
+            }
+        )
+    }
+
+    LaunchedEffect(searchQuery) {
+        if (language == "English") {
+            displayedDestinations = if (searchQuery.isEmpty()) {
+                englishDestinations
+            } else {
+                englishDestinations.filter {
+                    it.contains(searchQuery, ignoreCase = true)
+                }
+            }
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
-        TopAppBar(
-            title = {
-                Text(
-                    text = "Welcome to IITM RP",
-                    color = Color.White
-                )
-            },
-            navigationIcon = {
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_location),
-                        contentDescription = "Menu Icon",
-                        tint = Color.White
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Black
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(30.dp)
-        )
-
-        Spacer(modifier = Modifier.height(15.dp))
-
-        TextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text("Enter Destination") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .padding(start = 15.dp, end = 15.dp)
-                .background(Color(0xFFD9D9D9), RoundedCornerShape(8.dp)),
-            leadingIcon = {
-                Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
-            },
-            trailingIcon = {
-                IconButton(onClick = {
-                    when (PackageManager.PERMISSION_GRANTED) {
-                        ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) -> {
-                            askSpeechInput(context, onSpeechResult = { result ->
-                                searchQuery = result
-                            })
-                        }
-                        else -> {
-                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
-                    }
-                }) {
-                    Icon(imageVector = Icons.Default.Mic, contentDescription = "Mic Icon")
-                }
-            },
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = Color.Transparent
-            )
-        )
-
-        Spacer(modifier = Modifier.height(15.dp))
-
         Column(
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier
+                .fillMaxSize()
         ) {
-            filteredDestinations.forEach { destination ->
-                DestinationItem(destination)
-                Spacer(modifier = Modifier.height(8.dp))
+            TopAppBar(
+                title = {
+                    Text(
+                        text = titleTranslations[language] ?: "Welcome to IITM RP",
+                        color = Color.White
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { }) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_location),
+                            contentDescription = "Menu Icon",
+                            tint = Color.White
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Black
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(30.dp)
+            )
+
+            Spacer(modifier = Modifier.height(15.dp))
+
+            TextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text(hintTranslations[language] ?: "Enter Destination") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .padding(start = 15.dp, end = 15.dp)
+                    .background(Color(0xFFD9D9D9), RoundedCornerShape(8.dp)),
+                leadingIcon = {
+                    Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
+                },
+                trailingIcon = {
+                    IconButton(onClick = {
+                        when (PackageManager.PERMISSION_GRANTED) {
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) -> {
+                                askSpeechInput(context, onSpeechResult = { result ->
+                                    searchQuery = result
+                                })
+                            }
+                            else -> {
+                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                        }
+                    }) {
+                        Icon(imageVector = Icons.Default.Mic, contentDescription = "Mic Icon")
+                    }
+                },
+                colors = TextFieldDefaults.textFieldColors(
+                    containerColor = Color.Transparent
+                )
+            )
+
+            Spacer(modifier = Modifier.height(15.dp))
+
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+            ) {
+                items(displayedDestinations.size) { index ->
+                    DestinationItem(destination = displayedDestinations[index])
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
         }
+
+        Button(
+            onClick = { showDialog = true },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = Color.DarkGray
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 5.dp, bottom = 15.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Language,
+                contentDescription = "Change Language",
+                tint = Color.DarkGray,
+                modifier = Modifier.size(40.dp) // Increase the size of the icon
+            )
+        }
     }
+}
+
+@Composable
+fun LanguageSelectionDialog(onDismissRequest: () -> Unit, onLanguageSelected: (String) -> Unit) {
+    val languages = listOf("English", "Hindi", "Tamil", "Telugu")
+    var selectedLanguage by remember { mutableStateOf(languages[0]) }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(text = "Select Language")
+        },
+        text = {
+            Column {
+                languages.forEach { language ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                            .clickable {
+                                selectedLanguage = language
+                            }
+                    ) {
+                        RadioButton(
+                            selected = selectedLanguage == language,
+                            onClick = {
+                                selectedLanguage = language
+                            }
+                        )
+                        Text(text = language)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onLanguageSelected(selectedLanguage) }) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable
@@ -166,6 +301,7 @@ fun DestinationItem(destination: String) {
         )
     }
 }
+
 fun isSpeechRecognitionAvailable(context: Context): Boolean {
     val pm = context.packageManager
     val activities: List<ResolveInfo> = pm.queryIntentServices(
