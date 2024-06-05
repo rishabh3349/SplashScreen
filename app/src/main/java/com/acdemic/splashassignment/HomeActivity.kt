@@ -211,7 +211,7 @@ fun HomeLaunch() {
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp)
-            ) {
+            ){
                 items(displayedDestinations.size) { index ->
                     DestinationItem(destination = displayedDestinations[index])
                     Spacer(modifier = Modifier.height(8.dp))
